@@ -51,6 +51,6 @@ int main(int argc, char *argv[])
 		jobs[i].start = 1;
 		jobs[i].end = 0;
 		printf("job %d memory size: %d runtime: %d", jobs[i].id, jobs[i].mem, jobs[i].rt);
-		printf("job %d memory size: %d runtime: %d", jobs[0].id, jobs[0].mem, jobs[0].rt);
+		//printf("job %d memory size: %d runtime: %d", jobs[0].id, jobs[0].mem, jobs[0].rt);
 	}
 }
