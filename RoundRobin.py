@@ -58,11 +58,11 @@ class RoundRobinScheduler:
 
         self.pageNum = self.memSize/self.pageSize
 
-        print("init complete")
+        #print("init complete")
         self.start()
 
     def start(self):
-        print("hello!")
+        #print("hello!")
         #instantiate our page table
         for i in range(self.pageNum):
             self.pageTable.append(".")
@@ -71,50 +71,55 @@ class RoundRobinScheduler:
         for i in range(self.jobNo):
             self.queueJob(i+1)
 
+        print("Simulator Parameters:")
+        print("    Memory Size:{0}".format(self.memSize))
+        print("    Page Size:{0}".format(self.pageSize))
+        print("    Number of Jobs:{0}".format(self.jobNo))
+        print("    Runtime (min/max):{0}-{1}".format(self.minRuntime, self.maxRuntime))
+        print("    Memory (min/max):{0}-{1}".format(self.minMem, self.maxMem))
+
         self.scheduleProcesses()
 
     def queueJob(self, jobId):
             mem = random.randint(self.minMem, self.maxMem)
             runtime = random.randint(self.minRuntime, self.maxRuntime)
-            print("adding job {0} to jobQueue with memory size of {1} and runtime of {2}".format(jobId, mem, runtime))
+            #print("adding job {0} to jobQueue with memory size of {1} and runtime of {2}".format(jobId, mem, runtime))
             newJob = job(jobId, mem, runtime, self.tick, self.pageSize)
             self.jobQueue.append(newJob)
-            print("job {0} has a page number of {1}".format(newJob.id, newJob.pageNum))
-
-    #Takes an index of queueJob and a page location in virtual memory
-    def addJob(self, jobIndex):
-        #print(jobIndex)
-        #print(self.jobQueue[jobIndex])
-        job = self.jobQueue[jobIndex]
-
-        print("adding job {0} to self.jobs".format(job.id))
-
-        address = self.findPageCluster(job.pageNum)
-        if address != -1:
-            self.jobs.append(job)
-            for i in range (int(job.pageNum)):
-                self.pageTable[i] = job.id
-            return 1
-        return 0
+            #print("job {0} has a page number of {1}".format(newJob.id, newJob.pageNum))
         
     def scheduleProcesses(self):
+
         self.poop()
 
+        print("Job Queue:")
+        for i in range (len(self.jobs)):
+            print("    Job {0}: Runtime {1}, Memory {2}".format (self.jobs[i].id, self.jobs[i].rt, self.jobs[i].mem))
 
         while len(self.jobs) != 0:
+            print("Time Step {0}".format(self.tick + 1))
+            self.tick += 1
             job = self.jobs[self.currentJob]
-            print("running timeslice for job {0}".format(job.id))
-            print(str(self.pageTable))
+            print("    Job {0} Running".format(job.id))
             job.rt -= self.timeslice
+            job.end += 1
             if job.rt <= 0:
                 self.removeJob(self.currentJob)
 
                 #make up for hte lost index
                 self.currentJob = self.currentJob-1
                 self.poop()
+
+            print(str(self.pageTable))
+
                 
             if len(self.jobs) != 0:
                 self.currentJob = (self.currentJob + 1)%len(self.jobs)
+
+           
+        print("Job Informatoin:")
+        for i in range (len(self.completedJobs)):
+            print("    Job {0}: Start Time {1}, End Time {2}".format (self.completedJobs[i].id, self.completedJobs[i].start, self.completedJobs[i].end))     
         
     def poop(self):
         if len(self.jobQueue) == 0:
@@ -122,32 +127,37 @@ class RoundRobinScheduler:
         tempQueue = self.jobQueue[:]
         differential = 0
         for i in range(len(self.jobQueue)):
-            print("i = {0}".format(i))
-            print(self.jobQueue[i].id)
+            #print("i = {0}".format(i))
+            #print(self.jobQueue[i].id)
             job = self.jobQueue[i]
 
-            print("adding job {0} to self.jobs".format(job.id))
+            print("    Job {0} Starting".format(job.id))
     
             address = self.findPageCluster(job.pageNum)
             if address != -1:
                 differential += 1
-                print("found a page cluster for job {0} at location {1}".format(job.id, address))
+                #print("found a page cluster for job {0} at location {1}".format(job.id, address))
                 self.jobs.append(job)
+                job.start = self.tick
                 for j in range (int(job.pageNum)):
                     self.pageTable[j + address] = job.id
-                tempQueue.pop(i - differential)  \
+                tempQueue.pop(i - differential)  
 
-        self.jobQueue = tempQueue[:]
+        self.jobQueue = tempQueue[:] 
+        '''
         if len(self.jobQueue) == 0:
-            print("Hurray!")
+            print("Hurray!") 
+        '''
 
 
-    def removeJob(self, jobId):
-        job = self.jobs.pop(jobId)
+    def removeJob(self, jobIndex):
+        job = self.jobs.pop(jobIndex)
+        print("Job {0} complete".format(job.id))
         self.completedJobs.append(job)
+        job.end = self.tick
         for i in range(self.pageNum):
             page = self.pageTable[i]
-            if page == jobId:
+            if page == job.id:
                 self.pageTable[i] = "."
 
 
